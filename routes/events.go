@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelVenturi/go-practice-api/models"
+	"github.com/MichaelVenturi/go-practice-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,16 +39,27 @@ func getEventById(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+	token := context.Request.Header.Get("Authorization")
+	if token == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
+		return
+	}
+
+	userId, err := utils.VerifyToken(token)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
+		return
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event) // automatically puts request body into given variable if it shares this variable's structure
+	err = context.ShouldBindJSON(&event) // automatically puts request body into given variable if it shares this variable's structure
 	if err != nil {
 		fmt.Println(err)
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
 		return
 	}
 
-	event.ID = 1
-	event.UserID = 1
+	event.UserID = userId
 
 	err = event.Save()
 	if err != nil {
