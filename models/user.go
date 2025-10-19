@@ -1,6 +1,9 @@
 package models
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/MichaelVenturi/go-practice-api/db"
 	"github.com/MichaelVenturi/go-practice-api/utils"
 )
@@ -34,4 +37,25 @@ func (u *User) Save() error {
 	userId, err := res.LastInsertId()
 	u.ID = userId
 	return err
+}
+
+func (u *User) ValidateCredentials() error {
+	query := `
+	SELECT password FROM users WHERE email = ?
+	`
+	row := db.DB.QueryRow(query, u.Email)
+
+	var pass string
+	err := row.Scan(&pass)
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("credentials invalid")
+	}
+
+	isValid := utils.CheckPasswordHash(u.Password, pass)
+	if !isValid {
+		return errors.New("credentials invalid")
+	}
+
+	return nil
 }
