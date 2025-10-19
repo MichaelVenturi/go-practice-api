@@ -11,13 +11,18 @@ func RegisterRoutes(server *gin.Engine) {
 		GET("/events", getEvents).
 		GET("/events/:id", getEventById)
 
-	// manipulate events (protected)
 	authenticated := server.Group("/events")
 	authenticated.Use(middlewares.Authenticate)
+	// manipulate events (protected)
 	authenticated.
 		POST("/", createEvent).
 		PUT("/:id", updateEvent).
 		DELETE("/:id", deleteEvent)
+
+	// registrations
+	authenticated.
+		POST("/:id/register", registerForEvent).
+		DELETE("/:id/register", cancelRegistration)
 
 	// user auth
 	server.
