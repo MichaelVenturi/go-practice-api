@@ -18,18 +18,12 @@ func (u *User) Save() error {
 	query := `
 	INSERT INTO users(email, password) VALUES (?, ?)
 	`
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
 	hash, err := utils.HashPassword(u.Password)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(u.Email, hash)
+	res, err := utils.ExecQuery(db.DB, query, u.Email, hash)
 	if err != nil {
 		return err
 	}

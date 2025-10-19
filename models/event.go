@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/MichaelVenturi/go-practice-api/db"
+	"github.com/MichaelVenturi/go-practice-api/utils"
 )
 
 type Event struct {
@@ -22,16 +23,10 @@ func (e *Event) Save() error {
 	VALUES(?, ?, ?, ?, ?) 
 	`
 	// te ?s are to protect against sql injection attacks.  they will be filled in via the exec method
-	sqlstmt, err := db.DB.Prepare(query)
+	res, err := utils.ExecQuery(db.DB, query, e.Name, e.Description, e.Location, e.DateTime, e.UserID)
 	if err != nil {
 		return err
 	}
-	defer sqlstmt.Close()
-	res, err := sqlstmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
-	if err != nil {
-		return err
-	}
-
 	id, err := res.LastInsertId()
 	e.ID = id
 	return err
@@ -43,12 +38,7 @@ func (e *Event) Update() error {
 	SET name = ?, description = ?, location = ?, dateTime = ?
 	WHERE id = ?
 	`
-	sqlstmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer sqlstmt.Close()
-	_, err = sqlstmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
+	_, err := utils.ExecQuery(db.DB, query, e.Name, e.Description, e.Location, e.DateTime, e.UserID)
 	return err
 }
 
@@ -56,13 +46,7 @@ func (e *Event) Delete() error {
 	query := `
 	DELETE FROM events WHERE id = ?
 	`
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(e.ID)
+	_, err := utils.ExecQuery(db.DB, query, e.ID)
 	return err
 }
 
@@ -70,13 +54,7 @@ func (e *Event) Register(userId int64) error {
 	query := `
 	INSERT INTO registrations(event_id, user_id) VALUES (?, ?)
 	`
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(e.ID, userId)
+	_, err := utils.ExecQuery(db.DB, query, e.ID, userId)
 	return err
 }
 
@@ -84,13 +62,7 @@ func (e *Event) CancelRegistration(userId int64) error {
 	query := `
 	DELETE FROM registrations WHERE event_id = ? AND user_id = ?
 	`
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(e.ID, userId)
+	_, err := utils.ExecQuery(db.DB, query, e.ID, userId)
 	return err
 }
 
