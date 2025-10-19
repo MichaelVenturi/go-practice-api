@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/MichaelVenturi/go-practice-api/models"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -69,10 +68,17 @@ func updateEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEventByID(eventId) // confirm event exists
+	userId := context.GetInt64("userId")
+	event, err := models.GetEventByID(eventId) // confirm event exists
 	if err != nil {
 		fmt.Println(err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch event"})
+		return
+	}
+
+	// check if user owns this event
+	if event.UserID != userId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized for this event"})
 		return
 	}
 
@@ -101,10 +107,17 @@ func deleteEvent(context *gin.Context) {
 		return
 	}
 
+	userId := context.GetInt64("userId")
 	event, err := models.GetEventByID(eventId) // confirm event exists
 	if err != nil {
 		fmt.Println(err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch event"})
+		return
+	}
+
+	// check if user owns this event
+	if event.UserID != userId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized for this event"})
 		return
 	}
 
